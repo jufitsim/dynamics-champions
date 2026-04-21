@@ -60,14 +60,15 @@ export default function Home() {
       </header>
 
       {/* ── Welcome ────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 py-5 px-4 shadow-sm mt-4">
+      <div className="bg-white border-b border-gray-200 py-6 px-4 shadow-sm mt-8">
         <p
-          className="max-w-3xl mx-auto text-center text-sm leading-relaxed"
+          className="max-w-3xl mx-auto text-center text-base leading-relaxed"
           style={{ color: '#374151' }}
         >
-          Welcome to the Dynamics Champions Connection page. As members of the Dynamics Champions
-          community, this is your space to connect and collaborate with peers across industries,
-          products, and roles.
+          Welcome to the Dynamics Champions Connection page—a dynamic directory of our community.
+          Think of it like a collection of "baseball cards," where you can explore fellow Champions,
+          discover their industry and product focus, and connect with others who share your interests
+          across the Dynamics ecosystem.
         </p>
       </div>
 
