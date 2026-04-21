@@ -49,7 +49,7 @@ export default function Home() {
           src="/banner-long.png"
           alt="Dynamics Champions"
           className="w-full block object-cover object-top"
-          style={{ maxHeight: '140px' }}
+          style={{ maxHeight: '180px' }}
         />
         <div className="absolute inset-0 flex items-center justify-end px-6">
           <Link to="/join" className="btn-primary shadow-lg">
@@ -60,7 +60,7 @@ export default function Home() {
       </header>
 
       {/* ── Welcome ────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 py-4 px-4 shadow-sm" style={{ marginTop: '-8px' }}>
+      <div className="bg-white border-b border-gray-200 py-4 px-4 shadow-sm">
         <p
           className="max-w-3xl mx-auto text-center text-base leading-relaxed"
           style={{ color: '#374151' }}
