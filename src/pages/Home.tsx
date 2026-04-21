@@ -60,7 +60,7 @@ export default function Home() {
         <div className="absolute inset-0 flex items-center justify-end px-6">
           <Link to="/join" className="btn-primary shadow-lg">
             <UserPlus size={14} />
-            Connect
+            Add Your Card
           </Link>
         </div>
       </header>
