@@ -35,7 +35,8 @@ export default function Home() {
       !query ||
       c.name.toLowerCase().includes(query.toLowerCase()) ||
       c.organization.toLowerCase().includes(query.toLowerCase())
-    const matchesWorkload = !selectedWorkload || c.workload_id === selectedWorkload
+    const ids = c.workload_ids?.length ? c.workload_ids : c.workload_id ? [c.workload_id] : []
+    const matchesWorkload = !selectedWorkload || ids.includes(selectedWorkload)
     return matchesQuery && matchesWorkload
   })
 
@@ -110,7 +111,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-5">
                 {filtered.map((c) => (
-                  <ChampionCard key={c.id} champion={c} />
+                  <ChampionCard key={c.id} champion={c} workloads={workloads} />
                 ))}
               </div>
             </>

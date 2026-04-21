@@ -7,11 +7,17 @@ import { ArrowLeft, CheckCircle, Upload } from 'lucide-react'
 import { supabase, uploadChampionImage } from '@/lib/supabase'
 import type { Workload } from '@/types'
 
+const WORKLOAD_COLORS: Record<string, string> = {
+  Finance:          '#0078D4',
+  'Supply Chain':   '#107C10',
+  'Contact Center': '#D05F0A',
+  'Field Service':  '#8764B8',
+}
+
 const schema = z.object({
   name:         z.string().min(2, 'Full name is required'),
   title:        z.string().min(2, 'Job title is required'),
   organization: z.string().min(2, 'Organization is required'),
-  workload_id:  z.string().uuid('Please select a workload'),
   industry:     z.string().min(2, 'Industry is required'),
   linkedin_url: z
     .string()
@@ -24,6 +30,8 @@ type FormValues = z.infer<typeof schema>
 
 export default function Submit() {
   const [workloads, setWorkloads] = useState<Workload[]>([])
+  const [selectedWorkloads, setSelectedWorkloads] = useState<string[]>([])
+  const [workloadError, setWorkloadError] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -41,6 +49,13 @@ export default function Submit() {
     })
   }, [])
 
+  function toggleWorkload(id: string) {
+    setWorkloadError(false)
+    setSelectedWorkloads(prev =>
+      prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]
+    )
+  }
+
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -49,6 +64,10 @@ export default function Submit() {
   }
 
   async function onSubmit(values: FormValues) {
+    if (selectedWorkloads.length === 0) {
+      setWorkloadError(true)
+      return
+    }
     setServerError(null)
     try {
       let image_url: string | null = null
@@ -60,8 +79,9 @@ export default function Submit() {
         name:         values.name,
         title:        values.title,
         organization: values.organization,
-        workload_id:  values.workload_id,
         industry:     values.industry,
+        workload_id:  selectedWorkloads[0],
+        workload_ids: selectedWorkloads,
         linkedin_url: values.linkedin_url || null,
         image_url,
         status: 'pending',
@@ -96,13 +116,13 @@ export default function Submit() {
           <Link to="/" className="text-gray-400 hover:text-gray-600">
             <ArrowLeft size={18} />
           </Link>
-          <span className="font-semibold text-gray-900">Become a Champion</span>
+          <span className="font-semibold text-gray-900">Join the Directory</span>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
         <div className="bg-white rounded-2xl shadow-md p-8">
-          <h1 className="text-xl font-bold text-gray-900 mb-1">Join the Directory</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-1">Connect with Champions</h1>
           <p className="text-sm text-gray-500 mb-7">
             Fill in your details. Your submission will be reviewed before going live.
           </p>
@@ -159,16 +179,36 @@ export default function Submit() {
               {errors.industry && <p className="field-error">{errors.industry.message}</p>}
             </div>
 
-            {/* Workload */}
+            {/* Workloads - multi-select pills */}
             <div>
-              <label className="label">Workload *</label>
-              <select className="input bg-white" defaultValue="" {...register('workload_id')}>
-                <option value="" disabled>Select a workload…</option>
-                {workloads.map((w) => (
-                  <option key={w.id} value={w.id}>{w.name}</option>
-                ))}
-              </select>
-              {errors.workload_id && <p className="field-error">{errors.workload_id.message}</p>}
+              <label className="label">
+                Workload(s) *{' '}
+                <span className="text-gray-400 font-normal text-xs">select all that apply</span>
+              </label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {workloads.map((w) => {
+                  const active = selectedWorkloads.includes(w.id)
+                  const color = WORKLOAD_COLORS[w.name] ?? '#616161'
+                  return (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => toggleWorkload(w.id)}
+                      className="px-4 py-1.5 rounded-full text-sm font-medium border-2 transition-all"
+                      style={
+                        active
+                          ? { backgroundColor: color, borderColor: color, color: '#fff' }
+                          : { backgroundColor: '#fff', borderColor: '#D1D5DB', color: '#374151' }
+                      }
+                    >
+                      {w.name}
+                    </button>
+                  )
+                })}
+              </div>
+              {workloadError && (
+                <p className="field-error">Please select at least one workload</p>
+              )}
             </div>
 
             {/* LinkedIn */}

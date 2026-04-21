@@ -205,7 +205,7 @@ export default function Admin() {
                 ) : (
                   pending.map((c) => (
                     <div key={c.id} className="bg-white rounded-xl shadow-sm p-4 flex flex-col sm:flex-row gap-4 items-start">
-                      <ChampionCard champion={c} />
+                      <ChampionCard champion={c} workloads={workloads} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900">{c.name}</p>
                         <p className="text-xs text-gray-500">{c.title} · {c.organization}</p>
@@ -242,7 +242,7 @@ export default function Admin() {
                   <div className="flex flex-wrap gap-5">
                     {approved.map((c) => (
                       <div key={c.id} className="relative group">
-                        <ChampionCard champion={c} />
+                        <ChampionCard champion={c} workloads={workloads} />
                         <button
                           onClick={() => updateStatus(c.id, 'rejected')}
                           className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"

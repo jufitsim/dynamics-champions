@@ -1,5 +1,5 @@
 import { Linkedin } from 'lucide-react'
-import type { Champion } from '@/types'
+import type { Champion, Workload } from '@/types'
 
 const WORKLOAD_COLORS: Record<string, string> = {
   Finance:          '#0078D4',
@@ -16,11 +16,17 @@ function getColor(name?: string) {
 
 interface Props {
   champion: Champion
+  workloads: Workload[]
 }
 
-export default function ChampionCard({ champion }: Props) {
-  const workloadName = champion.workloads?.name
-  const color = getColor(workloadName)
+export default function ChampionCard({ champion, workloads }: Props) {
+  const ids = champion.workload_ids?.length
+    ? champion.workload_ids
+    : champion.workload_id ? [champion.workload_id] : []
+
+  const championWorkloads = workloads.filter(w => ids.includes(w.id))
+  const primaryColor = getColor(championWorkloads[0]?.name)
+
   const initials = champion.name
     .split(' ')
     .map((p) => p[0])
@@ -29,11 +35,11 @@ export default function ChampionCard({ champion }: Props) {
     .toUpperCase()
 
   return (
-    <div className="champion-card" style={{ borderTop: `4px solid ${color}` }}>
+    <div className="champion-card" style={{ borderTop: `4px solid ${primaryColor}` }}>
       {/* Header strip */}
       <div
         className="flex items-center justify-between px-3 py-1.5"
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: primaryColor }}
       >
         <span className="text-white text-[10px] font-bold tracking-widest uppercase">
           Dynamics 365
@@ -42,18 +48,18 @@ export default function ChampionCard({ champion }: Props) {
       </div>
 
       {/* Photo */}
-      <div className="card-header" style={{ backgroundColor: `${color}15` }}>
+      <div className="card-header" style={{ backgroundColor: `${primaryColor}15` }}>
         {champion.image_url ? (
           <img
             src={champion.image_url}
             alt={champion.name}
             className="card-photo"
-            style={{ borderColor: color }}
+            style={{ borderColor: primaryColor }}
           />
         ) : (
           <div
             className="card-photo-placeholder"
-            style={{ backgroundColor: color }}
+            style={{ backgroundColor: primaryColor }}
           >
             {initials}
           </div>
@@ -69,32 +75,36 @@ export default function ChampionCard({ champion }: Props) {
           <p className="text-gray-400 text-xs italic">{champion.industry}</p>
         )}
 
-        <div className="mt-2 flex flex-col items-center gap-2 w-full">
-          {workloadName && (
-            <span
-              className="workload-badge"
-              style={{ backgroundColor: color }}
-            >
-              {workloadName}
-            </span>
-          )}
+        {/* Workload badges - horizontal */}
+        {championWorkloads.length > 0 && (
+          <div className="flex flex-wrap gap-1 justify-center mt-2">
+            {championWorkloads.map(w => (
+              <span
+                key={w.id}
+                className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
+                style={{ backgroundColor: getColor(w.name) }}
+              >
+                {w.name}
+              </span>
+            ))}
+          </div>
+        )}
 
-          {champion.linkedin_url && (
-            <a
-              href={champion.linkedin_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0A66C2] hover:underline"
-            >
-              <Linkedin size={13} />
-              LinkedIn
-            </a>
-          )}
-        </div>
+        {champion.linkedin_url && (
+          <a
+            href={champion.linkedin_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0A66C2] hover:underline mt-1"
+          >
+            <Linkedin size={13} />
+            LinkedIn
+          </a>
+        )}
       </div>
 
       {/* Bottom accent */}
-      <div className="h-1 w-full" style={{ backgroundColor: color }} />
+      <div className="h-1 w-full" style={{ backgroundColor: primaryColor }} />
     </div>
   )
 }

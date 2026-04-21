@@ -10,6 +10,7 @@ export interface Champion {
   title: string
   organization: string
   workload_id: string
+  workload_ids: string[]
   image_url: string | null
   linkedin_url: string | null
   industry: string | null
