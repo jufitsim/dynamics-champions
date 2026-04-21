@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Check, X, Plus, Trash2, LogOut, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Check, X, Plus, Trash2, LogOut, Eye, EyeOff, Link2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import ChampionCard from '@/components/ChampionCard'
 import type { Champion, Workload } from '@/types'
@@ -45,7 +45,7 @@ export default function Admin() {
       supabase.from('workloads').select('*').order('name'),
       supabase
         .from('champions')
-        .select('*, workloads(id, name, created_at)')
+        .select('*, edit_token, workloads(id, name, created_at)')
         .order('submitted_at', { ascending: false }),
     ])
     setWorkloads(wData ?? [])
@@ -218,13 +218,22 @@ export default function Admin() {
                         <p className="text-xs text-gray-400 mt-1">
                           Submitted {new Date(c.submitted_at).toLocaleDateString()}
                         </p>
-                        <div className="flex gap-2 mt-3">
+                        <div className="flex flex-wrap gap-2 mt-3">
                           <button onClick={() => updateStatus(c.id, 'approved')} className="btn-success text-xs px-3 py-1.5">
                             <Check size={13} /> Approve
                           </button>
                           <button onClick={() => updateStatus(c.id, 'rejected')} className="btn-danger text-xs px-3 py-1.5">
                             <X size={13} /> Reject
                           </button>
+                          {c.edit_token && (
+                            <button
+                              onClick={() => navigator.clipboard.writeText(`${window.location.origin}/edit/${c.edit_token}`)}
+                              className="btn-secondary text-xs px-3 py-1.5"
+                              title="Copy edit link"
+                            >
+                              <Link2 size={13} /> Copy edit link
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -241,7 +250,7 @@ export default function Admin() {
                 ) : (
                   <div className="flex flex-wrap gap-5">
                     {approved.map((c) => (
-                      <div key={c.id} className="relative group">
+                      <div key={c.id} className="relative group flex flex-col items-center gap-1">
                         <ChampionCard champion={c} workloads={workloads} />
                         <button
                           onClick={() => updateStatus(c.id, 'rejected')}
@@ -250,6 +259,15 @@ export default function Admin() {
                         >
                           <X size={12} />
                         </button>
+                        {c.edit_token && (
+                          <button
+                            onClick={() => navigator.clipboard.writeText(`${window.location.origin}/edit/${c.edit_token}`)}
+                            className="text-xs text-gray-400 hover:text-dynamics-blue flex items-center gap-1 transition-colors"
+                            title="Copy edit link"
+                          >
+                            <Link2 size={11} /> Copy edit link
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
