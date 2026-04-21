@@ -50,17 +50,16 @@ export default function Home() {
           className="w-full object-cover block"
           style={{ maxHeight: '120px' }}
         />
-        <div className="absolute inset-0 flex items-center justify-between px-6">
-          <img src="/logo.png" alt="logo" className="h-10 w-auto drop-shadow" />
+        <div className="absolute inset-0 flex items-center justify-end px-6">
           <Link to="/join" className="btn-primary shadow-lg">
             <UserPlus size={14} />
-            Connections
+            Connect
           </Link>
         </div>
       </header>
 
       {/* ── Welcome ────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 py-5 px-4 shadow-sm">
+      <div className="bg-white border-b border-gray-200 py-5 px-4 shadow-sm mt-4">
         <p
           className="max-w-3xl mx-auto text-center text-sm leading-relaxed"
           style={{ color: '#374151' }}
