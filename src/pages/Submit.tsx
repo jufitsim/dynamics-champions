@@ -1,0 +1,190 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { ArrowLeft, CheckCircle, Upload } from 'lucide-react'
+import { supabase, uploadChampionImage } from '@/lib/supabase'
+import type { Workload } from '@/types'
+
+const schema = z.object({
+  name:         z.string().min(2, 'Full name is required'),
+  title:        z.string().min(2, 'Job title is required'),
+  organization: z.string().min(2, 'Organization is required'),
+  workload_id:  z.string().uuid('Please select a workload'),
+  linkedin_url: z
+    .string()
+    .url('Enter a valid URL')
+    .startsWith('https://www.linkedin.com', 'Must be a LinkedIn URL')
+    .or(z.literal('')),
+})
+
+type FormValues = z.infer<typeof schema>
+
+export default function Submit() {
+  const [workloads, setWorkloads] = useState<Workload[]>([])
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  useEffect(() => {
+    supabase.from('workloads').select('*').order('name').then(({ data }) => {
+      setWorkloads(data ?? [])
+    })
+  }, [])
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  async function onSubmit(values: FormValues) {
+    setServerError(null)
+    try {
+      let image_url: string | null = null
+      if (imageFile) {
+        image_url = await uploadChampionImage(imageFile)
+      }
+
+      const { error } = await supabase.from('champions').insert({
+        name:         values.name,
+        title:        values.title,
+        organization: values.organization,
+        workload_id:  values.workload_id,
+        linkedin_url: values.linkedin_url || null,
+        image_url,
+        status: 'pending',
+      })
+
+      if (error) throw error
+      setSubmitted(true)
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    }
+  }
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-dynamics-light flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-md p-10 max-w-md w-full text-center">
+          <CheckCircle size={48} className="text-dynamics-green mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Application submitted!</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Your profile is under review. You'll appear in the directory once approved.
+          </p>
+          <Link to="/" className="btn-primary justify-center">Back to Champions</Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-dynamics-light">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
+          <Link to="/" className="text-gray-400 hover:text-gray-600">
+            <ArrowLeft size={18} />
+          </Link>
+          <span className="font-semibold text-gray-900">Become a Champion</span>
+        </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+        <div className="bg-white rounded-2xl shadow-md p-8">
+          <h1 className="text-xl font-bold text-gray-900 mb-1">Join the Directory</h1>
+          <p className="text-sm text-gray-500 mb-7">
+            Fill in your details. Your submission will be reviewed before going live.
+          </p>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Photo upload */}
+            <div>
+              <label className="label">Profile Photo</label>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Upload size={20} className="text-gray-400" />
+                  )}
+                </div>
+                <label className="btn-secondary cursor-pointer text-xs px-3 py-1.5">
+                  Choose photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Name */}
+            <div>
+              <label className="label">Full Name *</label>
+              <input className="input" placeholder="Jane Smith" {...register('name')} />
+              {errors.name && <p className="field-error">{errors.name.message}</p>}
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="label">Job Title *</label>
+              <input className="input" placeholder="Director of Finance" {...register('title')} />
+              {errors.title && <p className="field-error">{errors.title.message}</p>}
+            </div>
+
+            {/* Organization */}
+            <div>
+              <label className="label">Organization *</label>
+              <input className="input" placeholder="Contoso Ltd" {...register('organization')} />
+              {errors.organization && <p className="field-error">{errors.organization.message}</p>}
+            </div>
+
+            {/* Workload */}
+            <div>
+              <label className="label">Workload *</label>
+              <select className="input bg-white" defaultValue="" {...register('workload_id')}>
+                <option value="" disabled>Select a workload…</option>
+                {workloads.map((w) => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+              {errors.workload_id && <p className="field-error">{errors.workload_id.message}</p>}
+            </div>
+
+            {/* LinkedIn */}
+            <div>
+              <label className="label">LinkedIn Profile URL</label>
+              <input
+                className="input"
+                placeholder="https://www.linkedin.com/in/your-profile"
+                {...register('linkedin_url')}
+              />
+              {errors.linkedin_url && <p className="field-error">{errors.linkedin_url.message}</p>}
+            </div>
+
+            {serverError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
+                {serverError}
+              </div>
+            )}
+
+            <button type="submit" className="btn-primary w-full justify-center" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting…' : 'Submit Application'}
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+  )
+}
