@@ -44,12 +44,7 @@ export default function Home() {
       {/* Nav */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-dynamics-blue rounded flex items-center justify-center">
-              <Users size={14} className="text-white" />
-            </div>
-            <span className="font-bold text-gray-900 text-sm">D365 Champions</span>
-          </div>
+          <img src="/square.png" alt="Dynamics Champions" className="h-9 w-auto" />
           <Link to="/join" className="btn-primary text-xs px-3 py-1.5">
             <UserPlus size={14} />
             Become a Champion
@@ -58,10 +53,14 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-dynamics-blue to-blue-800 text-white py-12 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">Dynamics 365 Champions</h1>
-          <p className="text-blue-100 text-base">
+      <div
+        className="relative text-white py-16 px-4 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/background.png)' }}
+      >
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="relative max-w-3xl mx-auto text-center">
+          <img src="/square.png" alt="Dynamics Champions" className="h-24 w-auto mx-auto mb-4 drop-shadow-lg" />
+          <p className="text-white/90 text-base drop-shadow">
             Meet the community of Dynamics 365 leaders transforming how organizations work.
           </p>
         </div>
