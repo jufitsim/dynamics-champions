@@ -65,6 +65,9 @@ export default function ChampionCard({ champion }: Props) {
         <h3 className="font-bold text-gray-900 text-base leading-tight">{champion.name}</h3>
         <p className="text-gray-500 text-xs leading-snug">{champion.title}</p>
         <p className="text-gray-600 text-xs font-medium">{champion.organization}</p>
+        {champion.industry && (
+          <p className="text-gray-400 text-xs italic">{champion.industry}</p>
+        )}
 
         <div className="mt-2 flex flex-col items-center gap-2 w-full">
           {workloadName && (

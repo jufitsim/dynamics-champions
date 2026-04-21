@@ -12,6 +12,7 @@ export interface Champion {
   workload_id: string
   image_url: string | null
   linkedin_url: string | null
+  industry: string | null
   status: 'pending' | 'approved' | 'rejected'
   submitted_at: string
   workloads?: Workload

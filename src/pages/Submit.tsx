@@ -12,6 +12,7 @@ const schema = z.object({
   title:        z.string().min(2, 'Job title is required'),
   organization: z.string().min(2, 'Organization is required'),
   workload_id:  z.string().uuid('Please select a workload'),
+  industry:     z.string().min(2, 'Industry is required'),
   linkedin_url: z
     .string()
     .url('Enter a valid URL')
@@ -60,6 +61,7 @@ export default function Submit() {
         title:        values.title,
         organization: values.organization,
         workload_id:  values.workload_id,
+        industry:     values.industry,
         linkedin_url: values.linkedin_url || null,
         image_url,
         status: 'pending',
@@ -148,6 +150,13 @@ export default function Submit() {
               <label className="label">Organization *</label>
               <input className="input" placeholder="Contoso Ltd" {...register('organization')} />
               {errors.organization && <p className="field-error">{errors.organization.message}</p>}
+            </div>
+
+            {/* Industry */}
+            <div>
+              <label className="label">Industry *</label>
+              <input className="input" placeholder="e.g. Healthcare, Manufacturing, Retail" {...register('industry')} />
+              {errors.industry && <p className="field-error">{errors.industry.message}</p>}
             </div>
 
             {/* Workload */}

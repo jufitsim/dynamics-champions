@@ -47,7 +47,7 @@ export default function Home() {
           <img src="/square.png" alt="Dynamics Champions" className="h-9 w-auto" />
           <Link to="/join" className="btn-primary text-xs px-3 py-1.5">
             <UserPlus size={14} />
-            Become a Champion
+            Connections
           </Link>
         </div>
       </header>
@@ -60,8 +60,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/20" />
         <div className="relative max-w-3xl mx-auto text-center">
           <img src="/square.png" alt="Dynamics Champions" className="h-24 w-auto mx-auto mb-4 drop-shadow-lg" />
-          <p className="text-white/90 text-base drop-shadow">
-            Meet the community of Dynamics 365 leaders transforming how organizations work.
+          <p className="text-white/90 text-base drop-shadow max-w-xl mx-auto leading-relaxed">
+            Welcome to the Dynamics Champions Connection page. As members of the Dynamics Champions
+            community, this is your space to connect and collaborate with peers across industries,
+            products, and roles.
           </p>
         </div>
       </div>
