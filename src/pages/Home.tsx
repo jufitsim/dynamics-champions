@@ -49,7 +49,7 @@ export default function Home() {
           src="/banner-long.png"
           alt="Dynamics Champions"
           className="w-full block object-cover object-top"
-          style={{ maxHeight: '180px' }}
+          style={{ maxHeight: '240px' }}
         />
         <div className="absolute inset-0 flex items-center justify-end px-6">
           <Link to="/join" className="btn-primary shadow-lg">
