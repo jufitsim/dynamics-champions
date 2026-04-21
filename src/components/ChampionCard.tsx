@@ -1,4 +1,5 @@
-import { Linkedin } from 'lucide-react'
+import { Linkedin, Pencil } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { Champion, Workload } from '@/types'
 
 const WORKLOAD_COLORS: Record<string, string> = {
@@ -17,9 +18,11 @@ function getColor(name?: string) {
 interface Props {
   champion: Champion
   workloads: Workload[]
+  editToken?: string
 }
 
-export default function ChampionCard({ champion, workloads }: Props) {
+export default function ChampionCard({ champion, workloads, editToken }: Props) {
+  const navigate = useNavigate()
   const ids = champion.workload_ids?.length
     ? champion.workload_ids
     : champion.workload_id ? [champion.workload_id] : []
@@ -35,7 +38,11 @@ export default function ChampionCard({ champion, workloads }: Props) {
     .toUpperCase()
 
   return (
-    <div className="champion-card" style={{ borderTop: `4px solid ${primaryColor}` }}>
+    <div
+      className={`champion-card ${editToken ? 'cursor-pointer' : ''}`}
+      style={{ borderTop: `4px solid ${primaryColor}` }}
+      onClick={() => editToken && navigate(`/edit/${editToken}`)}
+    >
       {/* Header strip */}
       <div
         className="flex items-center justify-between px-3 py-1.5"
@@ -102,6 +109,14 @@ export default function ChampionCard({ champion, workloads }: Props) {
           </a>
         )}
       </div>
+
+      {/* Edit indicator */}
+      {editToken && (
+        <div className="flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-gray-400 hover:text-dynamics-blue transition-colors">
+          <Pencil size={10} />
+          Edit your card
+        </div>
+      )}
 
       {/* Bottom accent */}
       <div className="h-1 w-full" style={{ backgroundColor: primaryColor }} />

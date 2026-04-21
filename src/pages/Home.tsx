@@ -12,6 +12,12 @@ export default function Home() {
   const [query, setQuery] = useState('')
   const [selectedWorkload, setSelectedWorkload] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [myTokens, setMyTokens] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('champion_tokens') || '{}')
+    setMyTokens(stored)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -112,7 +118,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-5">
                 {filtered.map((c) => (
-                  <ChampionCard key={c.id} champion={c} workloads={workloads} />
+                  <ChampionCard key={c.id} champion={c} workloads={workloads} editToken={myTokens[c.id]} />
                 ))}
               </div>
             </>

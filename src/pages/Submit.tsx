@@ -86,9 +86,14 @@ export default function Submit() {
         linkedin_url: values.linkedin_url || null,
         image_url,
         status: 'pending',
-      }).select('edit_token').single()
+      }).select('id, edit_token').single()
 
       if (error) throw error
+      if (inserted?.id && inserted?.edit_token) {
+        const stored = JSON.parse(localStorage.getItem('champion_tokens') || '{}')
+        stored[inserted.id] = inserted.edit_token
+        localStorage.setItem('champion_tokens', JSON.stringify(stored))
+      }
       setEditToken(inserted?.edit_token ?? null)
       setSubmitted(true)
     } catch (err) {
