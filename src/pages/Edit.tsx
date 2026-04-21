@@ -113,8 +113,13 @@ export default function Edit() {
 
       if (error) throw error
       setSaved(true)
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Something went wrong.')
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message
+          ?? JSON.stringify(err)
+      setServerError(msg)
     }
   }
 
