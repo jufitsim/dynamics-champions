@@ -16,6 +16,7 @@ export interface Champion {
   industry: string | null
   status: 'pending' | 'approved' | 'rejected'
   submitted_at: string
+  edit_token?: string
   workloads?: Workload
 }
 

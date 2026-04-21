@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft, CheckCircle, Upload } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Upload, AlertCircle } from 'lucide-react'
 import { supabase, uploadChampionImage } from '@/lib/supabase'
-import type { Workload } from '@/types'
+import type { Champion, Workload } from '@/types'
 
 const WORKLOAD_COLORS: Record<string, string> = {
   Finance:          '#0078D4',
@@ -28,27 +28,52 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-export default function Submit() {
+export default function Edit() {
+  const { token } = useParams<{ token: string }>()
+  const [champion, setChampion] = useState<Champion | null>(null)
   const [workloads, setWorkloads] = useState<Workload[]>([])
   const [selectedWorkloads, setSelectedWorkloads] = useState<string[]>([])
   const [workloadError, setWorkloadError] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [submitted, setSubmitted] = useState(false)
-  const [editToken, setEditToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   useEffect(() => {
-    supabase.from('workloads').select('*').order('name').then(({ data }) => {
-      setWorkloads(data ?? [])
-    })
-  }, [])
+    async function load() {
+      const [{ data: wData }, { data: cData }] = await Promise.all([
+        supabase.from('workloads').select('*').order('name'),
+        supabase.from('champions').select('*').eq('edit_token', token).single(),
+      ])
+      setWorkloads(wData ?? [])
+      if (!cData) { setNotFound(true); setLoading(false); return }
+      setChampion(cData as Champion)
+      setSelectedWorkloads(
+        (cData as Champion).workload_ids?.length
+          ? (cData as Champion).workload_ids
+          : (cData as Champion).workload_id ? [(cData as Champion).workload_id] : []
+      )
+      setImagePreview((cData as Champion).image_url)
+      reset({
+        name:         cData.name,
+        title:        cData.title,
+        organization: cData.organization,
+        industry:     cData.industry ?? '',
+        linkedin_url: cData.linkedin_url ?? '',
+      })
+      setLoading(false)
+    }
+    load()
+  }, [token, reset])
 
   function toggleWorkload(id: string) {
     setWorkloadError(false)
@@ -65,66 +90,66 @@ export default function Submit() {
   }
 
   async function onSubmit(values: FormValues) {
-    if (selectedWorkloads.length === 0) {
-      setWorkloadError(true)
-      return
-    }
+    if (selectedWorkloads.length === 0) { setWorkloadError(true); return }
     setServerError(null)
     try {
-      let image_url: string | null = null
-      if (imageFile) {
-        image_url = await uploadChampionImage(imageFile)
-      }
+      let image_url = champion?.image_url ?? null
+      if (imageFile) image_url = await uploadChampionImage(imageFile)
 
-      const { data: inserted, error } = await supabase.from('champions').insert({
-        name:         values.name,
-        title:        values.title,
-        organization: values.organization,
-        industry:     values.industry,
-        workload_id:  selectedWorkloads[0],
-        workload_ids: selectedWorkloads,
-        linkedin_url: values.linkedin_url || null,
-        image_url,
-        status: 'pending',
-      }).select('edit_token').single()
+      const { error } = await supabase
+        .from('champions')
+        .update({
+          name:         values.name,
+          title:        values.title,
+          organization: values.organization,
+          industry:     values.industry,
+          workload_id:  selectedWorkloads[0],
+          workload_ids: selectedWorkloads,
+          linkedin_url: values.linkedin_url || null,
+          image_url,
+          status:       'pending',
+        })
+        .eq('edit_token', token)
 
       if (error) throw error
-      setEditToken(inserted?.edit_token ?? null)
-      setSubmitted(true)
+      setSaved(true)
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setServerError(err instanceof Error ? err.message : 'Something went wrong.')
     }
   }
 
-  if (submitted) {
-    const editUrl = editToken ? `${window.location.origin}/edit/${editToken}` : null
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dynamics-light flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-dynamics-blue border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (notFound) {
     return (
       <div className="min-h-screen bg-dynamics-light flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-md p-10 max-w-lg w-full text-center">
-          <CheckCircle size={48} className="text-dynamics-green mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Application submitted!</h2>
+        <div className="bg-white rounded-2xl shadow-md p-10 max-w-md w-full text-center">
+          <AlertCircle size={48} className="text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Edit link not found</h2>
           <p className="text-gray-500 text-sm mb-6">
-            Your profile is under review. You'll appear in the directory once approved.
+            This edit link is invalid or has expired.
           </p>
-          {editUrl && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
-              <p className="text-sm font-semibold text-blue-800 mb-1">Save your edit link</p>
-              <p className="text-xs text-blue-600 mb-3">
-                Bookmark this link to update your profile later. It won't be shown again.
-              </p>
-              <div className="flex items-center gap-2">
-                <code className="text-xs bg-white border border-blue-200 rounded px-2 py-1.5 flex-1 truncate text-blue-700">
-                  {editUrl}
-                </code>
-                <button
-                  onClick={() => navigator.clipboard.writeText(editUrl)}
-                  className="btn-secondary text-xs px-3 py-1.5 shrink-0"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-          )}
+          <Link to="/" className="btn-primary justify-center">Back to Champions</Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (saved) {
+    return (
+      <div className="min-h-screen bg-dynamics-light flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-md p-10 max-w-md w-full text-center">
+          <CheckCircle size={48} className="text-dynamics-green mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Profile updated!</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Your changes are under review and will be live once approved.
+          </p>
           <Link to="/" className="btn-primary justify-center">Back to Champions</Link>
         </div>
       </div>
@@ -138,70 +163,59 @@ export default function Submit() {
           <Link to="/" className="text-gray-400 hover:text-gray-600">
             <ArrowLeft size={18} />
           </Link>
-          <span className="font-semibold text-gray-900">Join the Directory</span>
+          <span className="font-semibold text-gray-900">Edit Your Profile</span>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
         <div className="bg-white rounded-2xl shadow-md p-8">
-          <h1 className="text-xl font-bold text-gray-900 mb-1">Connect with Champions</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-1">Update Your Card</h1>
           <p className="text-sm text-gray-500 mb-7">
-            Fill in your details. Your submission will be reviewed before going live.
+            Changes will be reviewed before going live.
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Photo upload */}
+            {/* Photo */}
             <div>
               <label className="label">Profile Photo</label>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <Upload size={20} className="text-gray-400" />
-                  )}
+                  {imagePreview
+                    ? <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                    : <Upload size={20} className="text-gray-400" />}
                 </div>
                 <label className="btn-secondary cursor-pointer text-xs px-3 py-1.5">
-                  Choose photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={handleImageChange}
-                  />
+                  Change photo
+                  <input type="file" accept="image/*" className="sr-only" onChange={handleImageChange} />
                 </label>
               </div>
             </div>
 
-            {/* Name */}
             <div>
               <label className="label">Full Name *</label>
-              <input className="input" placeholder="Jane Smith" {...register('name')} />
+              <input className="input" {...register('name')} />
               {errors.name && <p className="field-error">{errors.name.message}</p>}
             </div>
 
-            {/* Title */}
             <div>
               <label className="label">Job Title *</label>
-              <input className="input" placeholder="Director of Finance" {...register('title')} />
+              <input className="input" {...register('title')} />
               {errors.title && <p className="field-error">{errors.title.message}</p>}
             </div>
 
-            {/* Organization */}
             <div>
               <label className="label">Organization *</label>
-              <input className="input" placeholder="Contoso Ltd" {...register('organization')} />
+              <input className="input" {...register('organization')} />
               {errors.organization && <p className="field-error">{errors.organization.message}</p>}
             </div>
 
-            {/* Industry */}
             <div>
               <label className="label">Industry *</label>
-              <input className="input" placeholder="e.g. Healthcare, Manufacturing, Retail" {...register('industry')} />
+              <input className="input" {...register('industry')} />
               {errors.industry && <p className="field-error">{errors.industry.message}</p>}
             </div>
 
-            {/* Workloads - multi-select pills */}
+            {/* Workloads */}
             <div>
               <label className="label">
                 Workload(s) *{' '}
@@ -228,19 +242,12 @@ export default function Submit() {
                   )
                 })}
               </div>
-              {workloadError && (
-                <p className="field-error">Please select at least one workload</p>
-              )}
+              {workloadError && <p className="field-error">Please select at least one workload</p>}
             </div>
 
-            {/* LinkedIn */}
             <div>
               <label className="label">LinkedIn Profile URL</label>
-              <input
-                className="input"
-                placeholder="https://www.linkedin.com/in/your-profile"
-                {...register('linkedin_url')}
-              />
+              <input className="input" placeholder="https://www.linkedin.com/in/your-profile" {...register('linkedin_url')} />
               {errors.linkedin_url && <p className="field-error">{errors.linkedin_url.message}</p>}
             </div>
 
@@ -251,7 +258,7 @@ export default function Submit() {
             )}
 
             <button type="submit" className="btn-primary w-full justify-center" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting…' : 'Submit Application'}
+              {isSubmitting ? 'Saving…' : 'Save Changes'}
             </button>
           </form>
         </div>
