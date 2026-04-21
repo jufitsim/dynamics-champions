@@ -43,35 +43,43 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
 
       {/* ── Banner ─────────────────────────────────────────────────── */}
-      <header
-        className="w-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/banner-long.png)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <img src="/logo.png" alt="Dynamics Champions" className="h-14 w-auto" />
-          <Link to="/join" className="btn-primary text-xs px-3 py-1.5">
+      <header className="relative w-full shrink-0">
+        <img
+          src="/banner-long.png"
+          alt="Dynamics Champions"
+          className="w-full object-cover block"
+          style={{ maxHeight: '120px' }}
+        />
+        <div className="absolute inset-0 flex items-center justify-between px-6">
+          <img src="/logo.png" alt="logo" className="h-10 w-auto drop-shadow" />
+          <Link to="/join" className="btn-primary shadow-lg">
             <UserPlus size={14} />
             Connections
           </Link>
         </div>
       </header>
 
-      {/* ── Welcome strip ──────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 py-6 px-4">
-        <p className="max-w-3xl mx-auto text-center text-gray-700 text-sm leading-relaxed">
+      {/* ── Welcome ────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-gray-200 py-5 px-4 shadow-sm">
+        <p
+          className="max-w-3xl mx-auto text-center text-sm leading-relaxed"
+          style={{ color: '#374151' }}
+        >
           Welcome to the Dynamics Champions Connection page. As members of the Dynamics Champions
           community, this is your space to connect and collaborate with peers across industries,
           products, and roles.
         </p>
       </div>
 
-      {/* ── Cards area with background ─────────────────────────────── */}
+      {/* ── Cards area ─────────────────────────────────────────────── */}
       <main
-        className="flex-1 bg-cover bg-center bg-no-repeat px-4 sm:px-6 lg:px-8 py-8"
+        className="flex-1 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: 'url(/background.png)' }}
       >
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+          {/* Filter bar on a frosted card */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm px-4 py-3 mb-6">
             <FilterBar
               query={query}
               onQueryChange={setQuery}
@@ -86,17 +94,19 @@ export default function Home() {
               <div className="w-8 h-8 border-4 border-dynamics-blue border-t-transparent rounded-full animate-spin" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-              <Users size={40} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">
-                {champions.length === 0
-                  ? 'No champions yet — be the first!'
-                  : 'No champions match your filters.'}
-              </p>
+            <div className="text-center py-20">
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-10 inline-block">
+                <Users size={40} className="mx-auto mb-3 text-gray-300" />
+                <p className="text-sm text-gray-500">
+                  {champions.length === 0
+                    ? 'No champions yet — be the first!'
+                    : 'No champions match your filters.'}
+                </p>
+              </div>
             </div>
           ) : (
             <>
-              <p className="text-xs text-gray-600 mb-4">
+              <p className="text-xs font-medium mb-4" style={{ color: '#374151' }}>
                 {filtered.length} champion{filtered.length !== 1 ? 's' : ''}
               </p>
               <div className="flex flex-wrap gap-5">
