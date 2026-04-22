@@ -96,8 +96,9 @@ export default function Submit() {
       }
       setEditToken(inserted?.edit_token ?? null)
       setSubmitted(true)
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message ?? 'Something went wrong. Please try again.'
+      setServerError(msg)
     }
   }
 
