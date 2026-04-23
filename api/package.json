@@ -1,0 +1,17 @@
+{
+  "name": "champions-api",
+  "version": "1.0.0",
+  "description": "Azure Functions API for Dynamics Champions Directory",
+  "main": "src/*.js",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "@azure/cosmos": "^4.1.1",
+    "@azure/storage-blob": "^12.26.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

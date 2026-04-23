@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ArrowLeft, CheckCircle, Upload, AlertCircle } from 'lucide-react'
-import { supabase, uploadChampionImage } from '@/lib/supabase'
+import { getWorkloads, getChampionByToken, updateChampionByToken, uploadChampionImage } from '@/lib/api'
 import type { Champion, Workload } from '@/types'
 
 const WORKLOAD_COLORS: Record<string, string> = {
@@ -50,11 +50,8 @@ export default function Edit() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: wData }, { data: cData }] = await Promise.all([
-        supabase.from('workloads').select('*').order('name'),
-        supabase.from('champions').select('*').eq('edit_token', token).single(),
-      ])
-      setWorkloads(wData ?? [])
+      const [wData, cData] = await Promise.all([getWorkloads(), getChampionByToken(token!)])
+      setWorkloads(wData)
       if (!cData) { setNotFound(true); setLoading(false); return }
       setChampion(cData as Champion)
       setSelectedWorkloads(
@@ -96,22 +93,16 @@ export default function Edit() {
       let image_url = champion?.image_url ?? null
       if (imageFile) image_url = await uploadChampionImage(imageFile)
 
-      const { error } = await supabase
-        .from('champions')
-        .update({
-          name:         values.name,
-          title:        values.title,
-          organization: values.organization,
-          industry:     values.industry,
-          workload_id:  selectedWorkloads[0],
-          workload_ids: selectedWorkloads,
-          linkedin_url: values.linkedin_url || null,
-          image_url,
-          status:       'pending',
-        })
-        .eq('edit_token', token)
-
-      if (error) throw error
+      await updateChampionByToken(token!, {
+        name:         values.name,
+        title:        values.title,
+        organization: values.organization,
+        industry:     values.industry,
+        workload_id:  selectedWorkloads[0],
+        workload_ids: selectedWorkloads,
+        linkedin_url: values.linkedin_url || null,
+        image_url,
+      })
       setSaved(true)
     } catch (err: unknown) {
       const msg =

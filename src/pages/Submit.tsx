@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ArrowLeft, CheckCircle, Upload } from 'lucide-react'
-import { supabase, uploadChampionImage } from '@/lib/supabase'
+import { createChampion, getWorkloads, uploadChampionImage } from '@/lib/api'
 import type { Workload } from '@/types'
 
 const WORKLOAD_COLORS: Record<string, string> = {
@@ -45,9 +45,7 @@ export default function Submit() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   useEffect(() => {
-    supabase.from('workloads').select('*').order('name').then(({ data }) => {
-      setWorkloads(data ?? [])
-    })
+    getWorkloads().then(setWorkloads).catch(console.error)
   }, [])
 
   function toggleWorkload(id: string) {
@@ -79,7 +77,7 @@ export default function Submit() {
       const id = crypto.randomUUID()
       const editToken = crypto.randomUUID()
 
-      const { error } = await supabase.from('champions').insert({
+      await createChampion({
         id,
         name:         values.name,
         title:        values.title,
@@ -90,10 +88,7 @@ export default function Submit() {
         linkedin_url: values.linkedin_url || null,
         image_url,
         edit_token:   editToken,
-        status: 'pending',
       })
-
-      if (error) throw error
       const stored = JSON.parse(localStorage.getItem('champion_tokens') || '{}')
       stored[id] = editToken
       localStorage.setItem('champion_tokens', JSON.stringify(stored))

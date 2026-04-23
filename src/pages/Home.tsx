@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { UserPlus, Users } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { getChampions, getWorkloads } from '@/lib/api'
 import ChampionCard from '@/components/ChampionCard'
 import FilterBar from '@/components/FilterBar'
 import type { Champion, Workload } from '@/types'
@@ -21,16 +21,9 @@ export default function Home() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: wData }, { data: cData }] = await Promise.all([
-        supabase.from('workloads').select('*').order('name'),
-        supabase
-          .from('champions')
-          .select('*, workloads(id, name, created_at)')
-          .eq('status', 'approved')
-          .order('name'),
-      ])
-      setWorkloads(wData ?? [])
-      setChampions((cData as Champion[]) ?? [])
+      const [wData, cData] = await Promise.all([getWorkloads(), getChampions()])
+      setWorkloads(wData)
+      setChampions(cData)
       setLoading(false)
     }
     load()
