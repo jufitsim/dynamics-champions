@@ -76,7 +76,11 @@ export default function Submit() {
         image_url = await uploadChampionImage(imageFile)
       }
 
-      const { data: inserted, error } = await supabase.from('champions').insert({
+      const id = crypto.randomUUID()
+      const editToken = crypto.randomUUID()
+
+      const { error } = await supabase.from('champions').insert({
+        id,
         name:         values.name,
         title:        values.title,
         organization: values.organization,
@@ -85,16 +89,15 @@ export default function Submit() {
         workload_ids: selectedWorkloads,
         linkedin_url: values.linkedin_url || null,
         image_url,
+        edit_token:   editToken,
         status: 'pending',
-      }).select('id, edit_token').single()
+      })
 
       if (error) throw error
-      if (inserted?.id && inserted?.edit_token) {
-        const stored = JSON.parse(localStorage.getItem('champion_tokens') || '{}')
-        stored[inserted.id] = inserted.edit_token
-        localStorage.setItem('champion_tokens', JSON.stringify(stored))
-      }
-      setEditToken(inserted?.edit_token ?? null)
+      const stored = JSON.parse(localStorage.getItem('champion_tokens') || '{}')
+      stored[id] = editToken
+      localStorage.setItem('champion_tokens', JSON.stringify(stored))
+      setEditToken(editToken)
       setSubmitted(true)
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? 'Something went wrong. Please try again.'
