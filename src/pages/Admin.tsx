@@ -26,6 +26,7 @@ export default function Admin() {
   const [workloads, setWorkloads] = useState<Workload[]>([])
   const [newWorkload, setNewWorkload] = useState('')
   const [dataLoading, setDataLoading] = useState(false)
+  const [dataError, setDataError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/.auth/me')
@@ -42,6 +43,7 @@ export default function Admin() {
         setChampions(cData)
         setWorkloads(wData)
       })
+      .catch((err) => setDataError(err.message ?? String(err)))
       .finally(() => setDataLoading(false))
   }, [principal])
 
@@ -121,6 +123,12 @@ export default function Admin() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        {dataError && (
+          <div className="mb-6 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
+            Failed to load data: {dataError}
+          </div>
+        )}
+
         <div className="flex gap-1 mb-6 bg-white rounded-xl p-1 shadow-sm w-fit">
           {([
             ['pending',   `Pending (${pending.length})`],
