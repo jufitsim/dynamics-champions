@@ -1,20 +1,17 @@
 const { app } = require('@azure/functions')
-const { championsContainer } = require('./db')
+const { getPool, sql, parseChampion } = require('./db')
 
 app.http('getChampionByToken', {
   methods: ['GET'],
   authLevel: 'anonymous',
   route: 'champions/edit/{token}',
   handler: async (req) => {
-    const token = req.params.token
-    const { resources } = await championsContainer.items
-      .query({
-        query: 'SELECT * FROM c WHERE c.edit_token = @token',
-        parameters: [{ name: '@token', value: token }],
-      })
-      .fetchAll()
-    if (resources.length === 0) return { status: 404, jsonBody: { error: 'Not found' } }
-    return { jsonBody: resources[0] }
+    const pool = await getPool()
+    const { recordset } = await pool.request()
+      .input('token', sql.NVarChar, req.params.token)
+      .query('SELECT * FROM champions WHERE edit_token = @token')
+    if (recordset.length === 0) return { status: 404, jsonBody: { error: 'Not found' } }
+    return { jsonBody: parseChampion(recordset[0]) }
   },
 })
 
@@ -24,24 +21,35 @@ app.http('updateChampionByToken', {
   route: 'champions/edit/{token}',
   handler: async (req) => {
     const token = req.params.token
-    const { resources } = await championsContainer.items
-      .query({
-        query: 'SELECT * FROM c WHERE c.edit_token = @token',
-        parameters: [{ name: '@token', value: token }],
-      })
-      .fetchAll()
-    if (resources.length === 0) return { status: 404, jsonBody: { error: 'Not found' } }
+    const body = await req.json()
 
-    const existing = resources[0]
-    const updates = await req.json()
-    const updated = {
-      ...existing,
-      ...updates,
-      id: existing.id,
-      edit_token: existing.edit_token,
-      status: 'pending',
-    }
-    const { resource } = await championsContainer.item(existing.id, existing.id).replace(updated)
-    return { jsonBody: resource }
+    const pool = await getPool()
+    const { recordset } = await pool.request()
+      .input('token', sql.NVarChar, token)
+      .query('SELECT id FROM champions WHERE edit_token = @token')
+    if (recordset.length === 0) return { status: 404, jsonBody: { error: 'Not found' } }
+
+    await pool.request()
+      .input('token',        sql.NVarChar, token)
+      .input('name',         sql.NVarChar, body.name)
+      .input('title',        sql.NVarChar, body.title)
+      .input('organization', sql.NVarChar, body.organization)
+      .input('industry',     sql.NVarChar, body.industry ?? null)
+      .input('workload_id',  sql.NVarChar, body.workload_id ?? null)
+      .input('workload_ids', sql.NVarChar, JSON.stringify(body.workload_ids ?? []))
+      .input('image_url',    sql.NVarChar, body.image_url ?? null)
+      .input('linkedin_url', sql.NVarChar, body.linkedin_url ?? null)
+      .query(`
+        UPDATE champions SET
+          name = @name, title = @title, organization = @organization,
+          industry = @industry, workload_id = @workload_id, workload_ids = @workload_ids,
+          image_url = @image_url, linkedin_url = @linkedin_url, status = 'pending'
+        WHERE edit_token = @token
+      `)
+
+    const updated = await pool.request()
+      .input('token', sql.NVarChar, token)
+      .query('SELECT * FROM champions WHERE edit_token = @token')
+    return { jsonBody: parseChampion(updated.recordset[0]) }
   },
 })

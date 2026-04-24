@@ -1,9 +1,18 @@
-const { CosmosClient } = require('@azure/cosmos')
+const sql = require('mssql')
 
-const client = new CosmosClient(process.env.COSMOS_CONNECTION_STRING)
-const db = client.database(process.env.COSMOS_DB_NAME ?? 'champions-directory')
-
-module.exports = {
-  championsContainer: db.container('champions'),
-  workloadsContainer: db.container('workloads'),
+async function getPool() {
+  return sql.connect(process.env.SQL_CONNECTION_STRING)
 }
+
+function parseChampion(row) {
+  if (!row) return null
+  return {
+    ...row,
+    workload_ids: row.workload_ids ? JSON.parse(row.workload_ids) : [],
+    submitted_at: row.submitted_at instanceof Date
+      ? row.submitted_at.toISOString()
+      : row.submitted_at,
+  }
+}
+
+module.exports = { getPool, sql, parseChampion }

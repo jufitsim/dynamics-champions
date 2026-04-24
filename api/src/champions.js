@@ -1,5 +1,5 @@
 const { app } = require('@azure/functions')
-const { championsContainer } = require('./db')
+const { getPool, sql, parseChampion } = require('./db')
 const { randomUUID } = require('crypto')
 
 app.http('getChampions', {
@@ -7,10 +7,10 @@ app.http('getChampions', {
   authLevel: 'anonymous',
   route: 'champions',
   handler: async () => {
-    const { resources } = await championsContainer.items
-      .query("SELECT * FROM c WHERE c.status = 'approved' ORDER BY c.name")
-      .fetchAll()
-    return { jsonBody: resources }
+    const pool = await getPool()
+    const { recordset } = await pool.request()
+      .query("SELECT * FROM champions WHERE status = 'approved' ORDER BY name")
+    return { jsonBody: recordset.map(parseChampion) }
   },
 })
 
@@ -20,14 +20,32 @@ app.http('createChampion', {
   route: 'champions',
   handler: async (req) => {
     const body = await req.json()
-    const item = {
-      ...body,
-      id: body.id ?? randomUUID(),
-      edit_token: body.edit_token ?? randomUUID(),
-      status: 'pending',
-      submitted_at: new Date().toISOString(),
-    }
-    const { resource } = await championsContainer.items.create(item)
-    return { status: 201, jsonBody: resource }
+    const id = body.id ?? randomUUID()
+    const editToken = body.edit_token ?? randomUUID()
+
+    const pool = await getPool()
+    await pool.request()
+      .input('id',           sql.NVarChar, id)
+      .input('name',         sql.NVarChar, body.name)
+      .input('title',        sql.NVarChar, body.title)
+      .input('organization', sql.NVarChar, body.organization)
+      .input('industry',     sql.NVarChar, body.industry ?? null)
+      .input('workload_id',  sql.NVarChar, body.workload_id ?? null)
+      .input('workload_ids', sql.NVarChar, JSON.stringify(body.workload_ids ?? []))
+      .input('image_url',    sql.NVarChar, body.image_url ?? null)
+      .input('linkedin_url', sql.NVarChar, body.linkedin_url ?? null)
+      .input('edit_token',   sql.NVarChar, editToken)
+      .query(`
+        INSERT INTO champions
+          (id, name, title, organization, industry, workload_id, workload_ids, image_url, linkedin_url, edit_token, status)
+        VALUES
+          (@id, @name, @title, @organization, @industry, @workload_id, @workload_ids, @image_url, @linkedin_url, @edit_token, 'pending')
+      `)
+
+    const { recordset } = await pool.request()
+      .input('id', sql.NVarChar, id)
+      .query('SELECT * FROM champions WHERE id = @id')
+
+    return { status: 201, jsonBody: parseChampion(recordset[0]) }
   },
 })
