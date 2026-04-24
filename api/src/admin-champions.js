@@ -4,7 +4,7 @@ const { getPool, sql, parseChampion } = require('./db')
 app.http('adminGetChampions', {
   methods: ['GET'],
   authLevel: 'anonymous',
-  route: 'admin/champions',
+  route: 'manage/champions',
   handler: async () => {
     const pool = await getPool()
     const { recordset } = await pool.request()
@@ -16,7 +16,7 @@ app.http('adminGetChampions', {
 app.http('adminUpdateChampion', {
   methods: ['PATCH'],
   authLevel: 'anonymous',
-  route: 'admin/champions/{id}',
+  route: 'manage/champions/{id}',
   handler: async (req) => {
     const { status } = await req.json()
     const pool = await getPool()

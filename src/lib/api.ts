@@ -46,7 +46,7 @@ export async function uploadChampionImage(file: File): Promise<string> {
 }
 
 export async function adminGetChampions() {
-  return (await apiFetch('/api/admin/champions')).json()
+  return (await apiFetch('/api/manage/champions')).json()
 }
 
 export async function adminGetWorkloads() {
@@ -54,7 +54,7 @@ export async function adminGetWorkloads() {
 }
 
 export async function adminUpdateChampion(id: string, updates: object) {
-  return (await apiFetch(`/api/admin/champions/${id}`, {
+  return (await apiFetch(`/api/manage/champions/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
@@ -62,7 +62,7 @@ export async function adminUpdateChampion(id: string, updates: object) {
 }
 
 export async function adminCreateWorkload(name: string) {
-  return (await apiFetch('/api/admin/workloads', {
+  return (await apiFetch('/api/manage/workloads', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -70,5 +70,5 @@ export async function adminCreateWorkload(name: string) {
 }
 
 export async function adminDeleteWorkload(id: string) {
-  await apiFetch(`/api/admin/workloads/${id}`, { method: 'DELETE' })
+  await apiFetch(`/api/manage/workloads/${id}`, { method: 'DELETE' })
 }

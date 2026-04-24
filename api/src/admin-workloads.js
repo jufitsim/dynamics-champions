@@ -5,7 +5,7 @@ const { randomUUID } = require('crypto')
 app.http('createWorkload', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  route: 'admin/workloads',
+  route: 'manage/workloads',
   handler: async (req) => {
     const { name } = await req.json()
     if (!name?.trim()) return { status: 400, jsonBody: { error: 'Name required' } }
@@ -25,7 +25,7 @@ app.http('createWorkload', {
 app.http('deleteWorkload', {
   methods: ['DELETE'],
   authLevel: 'anonymous',
-  route: 'admin/workloads/{id}',
+  route: 'manage/workloads/{id}',
   handler: async (req) => {
     const pool = await getPool()
     await pool.request()
